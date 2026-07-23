@@ -4768,12 +4768,16 @@ recalculate = function(){
   _origRecalculate();
   const crcl = calcCrCl();
   document.getElementById('crclDisplay').innerHTML = 'CrCl: <strong>' + crcl.toFixed(1) + '</strong> mL/min';
-  if(crcl<30){
+  var _rf = RENAL_FRAC[state.drug] != null ? RENAL_FRAC[state.drug] : 1.0;
+  if(_rf > 0 && crcl<30){
     document.getElementById('renalWarning').classList.remove('hidden');
-    document.getElementById('renalMsg').innerHTML='CrCl '+crcl.toFixed(1)+' mL/min &mdash; <strong>Significant renal impairment.</strong> Consider dose reduction or extended interval.';
-  } else if(crcl<60){
+    document.getElementById('renalMsg').innerHTML='CrCl '+crcl.toFixed(1)+' mL/min &mdash; <strong>Significant renal impairment.</strong> '+(state.drug==='phenytoin'||state.drug==='valproic_acid'?'Hepatically cleared &mdash; renal dose adjustment NOT required.':'Consider dose reduction or extended interval.');
+  } else if(_rf > 0 && crcl<60){
     document.getElementById('renalWarning').classList.remove('hidden');
     document.getElementById('renalMsg').innerHTML='CrCl '+crcl.toFixed(1)+' mL/min &mdash; Mild-moderate impairment. Monitor levels closely.';
+  } else if(_rf <= 0 && crcl<30){
+    document.getElementById('renalWarning').classList.remove('hidden');
+    document.getElementById('renalMsg').innerHTML='CrCl '+crcl.toFixed(1)+' mL/min &mdash; <strong>Renal impairment.</strong> '+DRUGS[state.drug].name+' is <strong>hepatically cleared</strong> &mdash; renal dose adjustment NOT required.';
   } else {
     document.getElementById('renalWarning').classList.add('hidden');
   }
