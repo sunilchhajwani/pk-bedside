@@ -4911,12 +4911,35 @@ function updateModifierInfo2(){
 const _origRecalc2 = recalculate;
 recalculate = function(){
   _origRecalc2();
-  // Apply Vd modifier AFTER 2-compartment setup
-  if(state._vdModifier && state._vdModifier>1){
-    state.vd*=state._vdModifier;
-    document.getElementById('vdInput').value=state.vd.toFixed(3);
-    // Rebuild profile with adjusted Vd
-    if(state._profile) buildProfile();
+  // Re-apply Vd modifiers AFTER 2-compartment setup (which overwrites Vd)
+  let vdMult = 1;
+  const burn = document.getElementById('burnsMode') ? document.getElementById('burnsMode').value : 'none';
+  const phase = document.getElementById('burnPhase') ? document.getElementById('burnPhase').value : 'early';
+  const third = document.getElementById('thirdSpaceMode') ? document.getElementById('thirdSpaceMode').value : 'none';
+  const drain = document.getElementById('thirdSpaceDrain') ? document.getElementById('thirdSpaceDrain').value : 'undrained';
+  if(burn !== 'none'){
+    if(phase === 'early'){const m = {minor:1.1,moderate:1.3,severe:1.6,massive:2.0}; vdMult *= m[burn];}
+    else{const m = {minor:1.05,moderate:1.15,severe:1.3,massive:1.5}; vdMult *= m[burn];}
+  }
+  if(third !== 'none'){
+    const drainFactor = drain === 'drained' ? 0.5 : 1.0;
+    const vdIncrease = {ascites:0.25,pleural:0.15,edema:0.35,multiple:0.55};
+    vdMult *= (1 + vdIncrease[third] * drainFactor);
+  }
+  if(vdMult > 1){
+    state.vd *= vdMult;
+    document.getElementById('vdInput').value = state.vd.toFixed(3);
+    // For 2-compartment drugs, rebuild microconstants with adjusted Vd
+    if(is2compDrug(state.drug) && activeMicro && !state.adjMicro){
+      const w = getEffW();
+      const newVss = state.vd * w;
+      const ratio = newVss / activeMicro.Vss;
+      activeMicro = finalizeMicro(activeMicro.CL, activeMicro.V1c * ratio, activeMicro.V2c * ratio, activeMicro.Q);
+      state.popMicro = activeMicro;
+      state.ke = activeMicro.beta;
+    }
+    buildProfile();
+    updateParams();
     drawChart();
   }
   updateAlbuminInfo();
