@@ -82,6 +82,10 @@ canvas{border-radius:8px;background:#1a2744;display:block;position:absolute;top:
 #reportBox .ok{background:#dcfce7;padding:8px 12px;border-radius:6px;margin:8px 0;font-size:12px}
 @media print{body{background:#fff;color:#000}.header,.panel,.legend,.params-bar{display:none}.layout{display:block;height:auto}#reportBox{max-width:100%;box-shadow:none;padding:0}}
 @media (max-width:1024px){.layout{grid-template-columns:1fr}.params-bar{grid-template-columns:repeat(3,1fr)}}
+
+.ddi-item{display:flex;align-items:center;gap:4px;padding:3px 0;font-size:10px;color:#94a3b8;cursor:pointer}
+.ddi-item input{margin:0}
+
 </style>
 </head>
 <body>
@@ -213,6 +217,75 @@ canvas{border-radius:8px;background:#1a2744;display:block;position:absolute;top:
       <select id="hepaticClass" onchange="recalculate()"><option value="none">None</option><option value="A">Child-Pugh A</option><option value="B">Child-Pugh B</option><option value="C">Child-Pugh C</option></select>
     </div>
     <div id="hepaticInfo" class="info-box hidden"></div>
+
+    <hr class="section-divider">
+    <h3>Drug Interactions <span style="color:#64748b;font-size:10px">(pathway-specific)</span></h3>
+    <div id="ddiPerps" style="display:grid;gap:3px;font-size:10px;margin:4px 0"></div>
+    <div id="interactionInfo" class="info-box hidden"></div>
+    <hr class="section-divider">
+    <h3>Albumin <span style="color:#64748b;font-size:10px">(for protein-bound drugs)</span></h3>
+    <div class="row">
+      <div class="field"><label>Albumin (g/dL)</label><input type="number" id="albuminMainInput2" value="4.0" step="0.5" oninput="syncAlbumin();recalculate()"></div>
+    </div>
+    <div id="albuminInfo" class="info-box hidden"></div>
+    <hr class="section-divider">
+    <h3>Burns &amp; Third Spacing</h3>
+    <div class="row">
+      <div class="field"><label>Burns (% TBSA)</label>
+        <select id="burnsMode2" onchange="syncBurns();recalculate()">
+          <option value="none">No burns</option>
+          <option value="minor">Minor (&lt;10%)</option>
+          <option value="moderate">Moderate (10-20%)</option>
+          <option value="severe">Severe (20-40%)</option>
+          <option value="massive">Massive (&gt;40%)</option>
+        </select>
+      </div>
+      <div class="field"><label>Burn Phase</label>
+        <select id="burnPhase2" onchange="syncBurns();recalculate()">
+          <option value="early">Early (0-48h)</option>
+          <option value="late">Late (&gt;48h)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Third Spacing</label>
+        <select id="thirdSpaceMode2" onchange="syncThirdSpace();recalculate()">
+          <option value="none">None</option>
+          <option value="ascites">Ascites</option>
+          <option value="pleural">Pleural Effusion</option>
+          <option value="edema">Severe Edema</option>
+          <option value="multiple">Multiple</option>
+        </select>
+      </div>
+      <div class="field"><label>Drainage</label>
+        <select id="thirdSpaceDrain2" onchange="syncThirdSpace();recalculate()">
+          <option value="undrained">Undrained</option>
+          <option value="drained">Drained</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Heart Failure</label>
+        <select id="hfMode2" onchange="syncHF();recalculate()">
+          <option value="none">None</option>
+          <option value="mild">NYHA I-II</option>
+          <option value="moderate">NYHA III</option>
+          <option value="severe">NYHA IV</option>
+        </select>
+      </div>
+      <div class="field"><label>Smoking</label>
+        <select id="smokingStatus2" onchange="syncSmoking();recalculate()">
+          <option value="none">Non-smoker</option>
+          <option value="light">Light (&lt;10/day)</option>
+          <option value="moderate">Moderate (10-20/day)</option>
+          <option value="heavy">Heavy (&gt;20/day)</option>
+          <option value="recent_quit">Recently quit</option>
+        </select>
+      </div>
+    </div>
+    <div id="modifierInfo2" class="info-box hidden"></div>
+    
+
     <div class="field">
       <label>MIC (mg/L) <span style="color:#64748b;font-size:10px">for T>MIC and AUC/MIC</span></label>
       <input type="number" id="micInput" value="1" step="0.25" oninput="recalculate()">
@@ -246,13 +319,13 @@ canvas{border-radius:8px;background:#1a2744;display:block;position:absolute;top:
 <input type="checkbox" id="pediatricMode">
 <input type="number" id="mgPerKg" value="">
 <input type="number" id="maxPedDose" value="">
-<select id="pregnancyMode"><option value="none" selected>None</option></select>
-<select id="hfMode"><option value="none" selected>None</option></select>
-<select id="smokingStatus"><option value="none" selected>None</option></select>
-<select id="burnsMode"><option value="none" selected>None</option></select>
-<select id="burnPhase"><option value="early" selected>Early</option></select>
-<select id="thirdSpaceMode"><option value="none" selected>None</option></select>
-<select id="thirdSpaceDrain"><option value="undrained" selected>Undrained</option></select>
+<select id="pregnancyMode"><option value="none" selected>None</option><option value="first">1st</option><option value="second">2nd</option><option value="third">3rd</option><option value="postpartum">PP</option></select>
+<select id="hfMode"><option value="none" selected>None</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select>
+<select id="smokingStatus"><option value="none" selected>None</option><option value="light">Light</option><option value="moderate">Moderate</option><option value="heavy">Heavy</option><option value="recent_quit">Quit</option></select>
+<select id="burnsMode"><option value="none" selected>None</option><option value="minor">Minor</option><option value="moderate">Moderate</option><option value="severe">Severe</option><option value="massive">Massive</option></select>
+<select id="burnPhase"><option value="early" selected>Early</option><option value="late">Late</option></select>
+<select id="thirdSpaceMode"><option value="none" selected>None</option><option value="ascites">Ascites</option><option value="pleural">Pleural</option><option value="edema">Edema</option><option value="multiple">Multiple</option></select>
+<select id="thirdSpaceDrain"><option value="undrained" selected>Undrained</option><option value="drained">Drained</option></select>
 <div id="kaRow"></div>
 <input type="number" id="vancMIC" value="1">
 <input type="checkbox" id="aucMode">
@@ -423,8 +496,31 @@ function updateDialysisInfo(){}
 function updateInteractionInfo(){}
 function updateWeightInfo(){}
 function showPedInfo(){}
-function checkRenal(){}
-function applyPhysiologicalModifiers(){}
+function checkRenal(){
+  const c=calcCrCl();
+  const w=document.getElementById('renalWarning'),m=document.getElementById('renalMsg');
+  if(c<30){w.classList.remove('hidden');m.innerHTML='CrCl '+c.toFixed(1)+' mL/min -- <strong>Significant renal impairment.</strong> Consider dose reduction or extended interval.';}
+  else if(c<60){w.classList.remove('hidden');m.innerHTML='CrCl '+c.toFixed(1)+' mL/min -- <strong>Mild-moderate impairment.</strong> Monitor levels closely.';}
+  else w.classList.add('hidden');
+}
+function applyPhysiologicalModifiers(){
+  // Store Vd multiplier for later application (after 2-compartment setup)
+  let mult=1;
+  const burn=document.getElementById('burnsMode')?document.getElementById('burnsMode').value:'none';
+  const phase=document.getElementById('burnPhase')?document.getElementById('burnPhase').value:'early';
+  const third=document.getElementById('thirdSpaceMode')?document.getElementById('thirdSpaceMode').value:'none';
+  const drain=document.getElementById('thirdSpaceDrain')?document.getElementById('thirdSpaceDrain').value:'undrained';
+  if(burn!=='none'){
+    if(phase==='early'){const vdMult={minor:1.1,moderate:1.3,severe:1.6,massive:2.0};mult*=vdMult[burn];}
+    else{const vdMult={minor:1.05,moderate:1.15,severe:1.3,massive:1.5};mult*=vdMult[burn];}
+  }
+  if(third!=='none'){
+    const drainFactor=drain==='drained'?0.5:1.0;
+    const vdIncrease={ascites:0.25,pleural:0.15,edema:0.35,multiple:0.55};
+    mult*=(1+vdIncrease[third]*drainFactor);
+  }
+  state._vdModifier=mult;
+}
 function calcTMIC(){}
 function updateAUCMode(){}
 
@@ -4714,6 +4810,140 @@ document.addEventListener('DOMContentLoaded', function(){
 window.addEventListener('resize', function(){
   resizeCanvas();
   drawChart();
+});
+
+
+
+// === SYNC FUNCTIONS for new bedside fields ===
+function syncAlbumin(){
+  const v = document.getElementById('albuminMainInput2').value;
+  const stub = document.getElementById('albuminMainInput');
+  if(stub) stub.value = v;
+  updateAlbuminInfo();
+}
+function syncBurns(){
+  const v = document.getElementById('burnsMode2').value;
+  const stub = document.getElementById('burnsMode');
+  if(stub) stub.value = v;
+  const p = document.getElementById('burnPhase2').value;
+  const ps = document.getElementById('burnPhase');
+  if(ps) ps.value = p;
+}
+function syncThirdSpace(){
+  const v = document.getElementById('thirdSpaceMode2').value;
+  const stub = document.getElementById('thirdSpaceMode');
+  if(stub) stub.value = v;
+  const d = document.getElementById('thirdSpaceDrain2').value;
+  const ds = document.getElementById('thirdSpaceDrain');
+  if(ds) ds.value = d;
+}
+function syncHF(){
+  const v = document.getElementById('hfMode2').value;
+  const stub = document.getElementById('hfMode');
+  if(stub) stub.value = v;
+}
+function syncSmoking(){
+  const v = document.getElementById('smokingStatus2').value;
+  const stub = document.getElementById('smokingStatus');
+  if(stub) stub.value = v;
+}
+function updateAlbuminInfo(){
+  const drug = DRUGS[state.drug];
+  const albumin = parseFloat(document.getElementById('albuminMainInput2').value) || 4.0;
+  const info = document.getElementById('albuminInfo');
+  if(drug.pb >= 80 && albumin < 3.5){
+    info.classList.remove('hidden');
+    const fu = 1 - (drug.pb/100);
+    const fu_adj = fu / ((fu * (albumin/4.0)) + (1 - albumin/4.0));
+    info.innerHTML = '<strong style="color:#f472b6">Hypoalbuminemia:</strong> Alb ' + albumin + ' g/dL. Free fraction ' + (fu*100).toFixed(1) + '% &rarr; ' + (fu_adj*100).toFixed(1) + '%.<br>Free drug HIGHER than total suggests. Use corrected targets.';
+  } else {
+    info.classList.add('hidden');
+  }
+}
+function updateModifierInfo2(){
+  const drug = DRUGS[state.drug];
+  const burn = document.getElementById('burnsMode2').value;
+  const phase = document.getElementById('burnPhase2').value;
+  const third = document.getElementById('thirdSpaceMode2').value;
+  const drain = document.getElementById('thirdSpaceDrain2').value;
+  const hf = document.getElementById('hfMode2').value;
+  const smoke = document.getElementById('smokingStatus2').value;
+  const info = document.getElementById('modifierInfo2');
+  let msgs = [];
+  
+  if(burn !== 'none'){
+    const burnVd = {minor:'10%',moderate:'30%',severe:'60%',massive:'100%'};
+    if(phase === 'early'){
+      msgs.push('<span style="color:#f87171">Burns (' + burn + ', early):</span> Vd +' + burnVd[burn] + '. Need HIGHER loading doses. Capillary leak phase.');
+    } else {
+      msgs.push('<span style="color:#fbbf24">Burns (' + burn + ', late):</span> Vd still +' + burnVd[burn] + '. CL may decline (AKI risk). Reduce maintenance.');
+    }
+  }
+  
+  if(third !== 'none'){
+    const tsVd = {ascites:'25%',pleural:'15%',edema:'35%',multiple:'55%'};
+    let m = '<span style="color:#c084fc">Third Spacing:</span> Vd +' + tsVd[third] + '. Higher loading dose needed.';
+    if(drain === 'drained') m += ' <span style="color:#4ade80">Drained</span> &mdash; Vd increase partially reversed.';
+    msgs.push(m);
+  }
+  
+  if(hf !== 'none'){
+    const hfTxt = {mild:'Hepatic perfusion -15%. Slight accumulation risk.',moderate:'Hepatic perfusion -30%. Reduce doses 25%.',severe:'Hepatic perfusion -50%. Reduce doses 30-50%.'};
+    const affects = drug.hepatic ? ' <strong style="color:#f87171">Affects this drug.</strong>' : ' Minimal effect (renally cleared).';
+    msgs.push('<span style="color:#60a5fa">Heart Failure (' + hf + '):</span> ' + hfTxt[hf] + affects);
+  }
+  
+  if(smoke !== 'none'){
+    const smokeTxt = {light:'CYP1A2 +20%',moderate:'CYP1A2 +40%',heavy:'CYP1A2 +60%',recent_quit:'CYP1A2 induction declining'};
+    const affectsDrug = (state.drug === 'clozapine' || state.drug === 'theophylline');
+    msgs.push('<span style="color:#fbbf24">Smoking (' + smoke + '):</span> ' + smokeTxt[smoke] + (affectsDrug ? ' <strong style="color:#f87171">This drug IS affected.</strong>' : ''));
+  }
+  
+  if(msgs.length > 0){
+    info.classList.remove('hidden');
+    info.innerHTML = msgs.join('<br><br>');
+  } else {
+    info.classList.add('hidden');
+  }
+}
+
+// Override recalculate to also update modifier info and albumin
+const _origRecalc2 = recalculate;
+recalculate = function(){
+  _origRecalc2();
+  // Apply Vd modifier AFTER 2-compartment setup
+  if(state._vdModifier && state._vdModifier>1){
+    state.vd*=state._vdModifier;
+    document.getElementById('vdInput').value=state.vd.toFixed(3);
+    // Rebuild profile with adjusted Vd
+    if(state._profile) buildProfile();
+    drawChart();
+  }
+  updateAlbuminInfo();
+  updateModifierInfo2();
+};
+
+// Render DDI perpetrators
+function renderDDIPerpsBedside(){
+  const c = document.getElementById('ddiPerps');
+  if(!c) return;
+  c.innerHTML = DDI_PERPETRATORS.map(function(p){
+    return '<label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="' + p.id + '" onchange="recalculate()" style="margin:0"> ' + p.label + '</label>';
+  }).join('');
+}
+
+// Override onDrugChange to render DDI and update info
+const _origOnDrugChange2 = onDrugChange;
+onDrugChange = function(){
+  _origOnDrugChange2();
+  renderDDIPerpsBedside();
+  updateAlbuminInfo();
+  updateModifierInfo2();
+};
+
+// Initialize on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function(){
+  renderDDIPerpsBedside();
 });
 
 </script>
